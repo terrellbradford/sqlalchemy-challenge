@@ -42,7 +42,6 @@ def home():
         f"/api/v1.0/precipitation<br/>"
         f"/api/v1.0/stations<br/>"
         f"/api/v1.0/tobs<br/>"
-        f"/api/v1.0/<start>"
         f"/api/v1.0/<start>/<end>"
     )
 
@@ -112,7 +111,28 @@ def tobs():
     return jsonify(lowest_temp,highest_temp,average_temp)
 
 
-@app.route("/api/v1.0/")
+@app.route("/api/v1.0/<start>")
+@app.route("/api/v1.0/<start>/<end>")
+
+def start_end(start,end = None):
+# Create our session (link) from Python to the DB
+    session = Session(engine)
+# Query
+    #start_date = dt.datetime.strptime(start, '%Y-%m-%d')
+    #end_date = dt.datetime.strptime(end, "%Y-%m-%d")
+    sel = [func.min(Measurement.tobs), func.avg(Measurement.tobs),func.max(Measurement.tobs)]
+
+    if not end:
+        #start1 = session.query(*sel).filter(dt.datetime.strftime("%m-%d", Measurement.date) == start_date).all() 
+        start1 = session.query(*sel).filter(Measurement.date >= start).all
+        start1 = list(np.ravel(start1))
+        return jsonify(start1)
+
+    #start2 = session.query(func.min(Measurement.tobs), func.avg(Measurement.tobs),func.max(Measurement.tobs)).filter(Measurement.date >= start).filter(Measurement.date <= end).all()
+    start2 = session.query(*sel).filter(Measurement.date >= start).filter(Measurement.date <=end).all
+    session.close()
+    start2 = list(np.ravel(start2))
+    return jsonify(start2)
 
 
 
